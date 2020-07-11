@@ -26,8 +26,8 @@ def helen_formula(coord):
 
 def centroid_computation(points):
     points1=points.reshape(4,2)
-    print("points1 is:",points1)
-    print("points number is:",len(points1))
+    # print("points1 is:",points1)
+    # print("points number is:",len(points1))
     sum_x=0
     sum_y=0
     for i in range(len(points1)):
@@ -55,7 +55,7 @@ def image_process(img):
         print("the area is:",cv2.contourArea(cnts1[i], True))
 
     # points feature computation 
-    points=np.zeros(8)
+    points=[]
     for i in range(0,4):
         c=cnts1[i]
         # print("c is:",c)
@@ -64,13 +64,37 @@ def image_process(img):
         cy = int(M["m01"] / M["m00"])
         now_central = (cx, cy)
         cv2.circle(img, now_central, 10, (0, 0, 255), -1)
-        points[2*i]=cx
-        points[2*i+1]=cy
+        points.append(int(cx))
+        points.append(int(cy))
+
+    print("points are:",points)
+    xlist=[]
+    ylist=[]
+    for i in range(len(points)/2):
+        xlist.append(int(points[2*i]))
+        ylist.append(int(points[2*i+1]))
+    xmin_index=np.array(xlist).argmin()
+    xmax_index=np.array(xlist).argmax()
+    ymin_index=np.array(ylist).argmin()
+    ymax_index=np.array(ylist).argmax()
+
+    points=np.array(points).reshape(4,2)
+    left_point=(points[xmin_index,0],points[xmin_index,1])
+    right_point=(points[xmax_index,0],points[xmax_index,1])
+    bot_point=(points[ymin_index,0],points[ymin_index,1])
+    top_point=(points[ymax_index,0],points[ymax_index,1])
+
+    print("left point is:",left_point)
+    cv2.line(image, left_point, top_point, [0, 255, 0], 2)
+    cv2.line(image, left_point, bot_point, [0, 255, 0], 2)
+    cv2.line(image, right_point, top_point, [0, 255, 0], 2)
+    cv2.line(image, right_point, bot_point, [0, 255, 0], 2)
 
     # central point computation
     now_central=centroid_computation(points)
-    print("now central is:",now_central)
+    # print("now central is:",now_central)
     cv2.circle(img, now_central, 10, (0, 0, 255), -1)
+
     area=helen_formula(points)
     print("area is:",area)
 
@@ -82,9 +106,10 @@ def image_process(img):
 # print("length of cnts is:",len(cnts))
 
 
-cap=cv2.VideoCapture(0)
+# cap=cv2.VideoCapture(0)
 while(1):
-    ret,image=cap.read()
+    # ret,image=cap.read()
+    image = cv2.imread('image1.jpg')
     image_process(image)
 
     k=cv2.waitKey(5)&0xFF
