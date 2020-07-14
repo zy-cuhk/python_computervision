@@ -39,9 +39,8 @@ def centroid_computation(points):
     return now_central
 
 def image_process(img):
-    cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+    # cv2.namedWindow('image', cv2.WINDOW_NORMAL)
 
-    # point contour extraction
     hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
     lower_red=np.array([0,50,50])
     upper_red=np.array([10,255,255])
@@ -53,65 +52,71 @@ def image_process(img):
     cnts1=sorted(cnts,key=cv2.contourArea,reverse=True)
     for i in range(len(cnts1)):
         print("the area is:",cv2.contourArea(cnts1[i], True))
+    # cv2.imshow('the captured video',img)
+    cv2.imshow("the mask",mask)
+    cv2.imshow("the res",res)
 
-    # points feature computation 
-    points=[]
-    for i in range(0,4):
-        c=cnts1[i]
-        # print("c is:",c)
-        M = cv2.moments(c)
-        cx= int(M["m10"] / M["m00"])
-        cy = int(M["m01"] / M["m00"])
-        now_central = (cx, cy)
-        cv2.circle(img, now_central, 10, (0, 0, 255), -1)
-        points.append(int(cx))
-        points.append(int(cy))
+    print("the contour number is:",len(cnts1))
+    if len(cnts1)>=4:
+        points=[]
+        for i in range(0,4):
+            c=cnts1[i]
+            M = cv2.moments(c)
+            if M["m00"]!=0.0:
+                cx= int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                now_central = (cx, cy)
+                cv2.circle(img, now_central, 10, (0, 0, 255), -1)
+                points.append(int(cx))
+                points.append(int(cy))
 
-    print("points are:",points)
-    xlist=[]
-    ylist=[]
-    for i in range(len(points)/2):
-        xlist.append(int(points[2*i]))
-        ylist.append(int(points[2*i+1]))
-    xmin_index=np.array(xlist).argmin()
-    xmax_index=np.array(xlist).argmax()
-    ymin_index=np.array(ylist).argmin()
-    ymax_index=np.array(ylist).argmax()
+                if len(points)==8:
+                    xlist=[]
+                    ylist=[]
+                    for i in range(len(points)/2):
+                        xlist.append(int(points[2*i]))
+                        ylist.append(int(points[2*i+1]))
+                    xmin_index=np.array(xlist).argmin()
+                    xmax_index=np.array(xlist).argmax()
+                    ymin_index=np.array(ylist).argmin()
+                    ymax_index=np.array(ylist).argmax()
+                    points=np.array(points).reshape(4,2)
+                    left_point=(points[xmin_index,0],points[xmin_index,1])
+                    right_point=(points[xmax_index,0],points[xmax_index,1])
+                    bot_point=(points[ymin_index,0],points[ymin_index,1])
+                    top_point=(points[ymax_index,0],points[ymax_index,1])
+                    cv2.line(img, left_point, top_point, [0, 255, 0], 2)
+                    cv2.line(img, left_point, bot_point, [0, 255, 0], 2)
+                    cv2.line(img, right_point, top_point, [0, 255, 0], 2)
+                    cv2.line(img, right_point, bot_point, [0, 255, 0], 2)
+                    now_central=centroid_computation(points)
+                    cv2.circle(img, now_central, 10, (0, 0, 255), -1)
+                    area=helen_formula(points)
+                    cv2.imshow('the captured video',img)
 
-    points=np.array(points).reshape(4,2)
-    left_point=(points[xmin_index,0],points[xmin_index,1])
-    right_point=(points[xmax_index,0],points[xmax_index,1])
-    bot_point=(points[ymin_index,0],points[ymin_index,1])
-    top_point=(points[ymax_index,0],points[ymax_index,1])
-
-    print("left point is:",left_point)
-    cv2.line(image, left_point, top_point, [0, 255, 0], 2)
-    cv2.line(image, left_point, bot_point, [0, 255, 0], 2)
-    cv2.line(image, right_point, top_point, [0, 255, 0], 2)
-    cv2.line(image, right_point, bot_point, [0, 255, 0], 2)
-
-    # central point computation
-    now_central=centroid_computation(points)
-    # print("now central is:",now_central)
-    cv2.circle(img, now_central, 10, (0, 0, 255), -1)
-
-    area=helen_formula(points)
-    print("area is:",area)
-
-    cv2.imshow('image',img)
-
-# k = cv2.waitKey(0)
-# if k == 27: 
-#     cv2.destroyAllWindows()
-# print("length of cnts is:",len(cnts))
+                    print("now_central is:",now_central)
 
 
-# cap=cv2.VideoCapture(0)
-while(1):
-    # ret,image=cap.read()
-    image = cv2.imread('image1.jpg')
-    image_process(image)
 
-    k=cv2.waitKey(5)&0xFF
-    if k==27:
-        break
+def show_image(img):
+    cv2.imshow('the captured video',img)
+
+
+
+def main():
+    cap=cv2.VideoCapture(2)
+    while(1):
+        ret,image=cap.read()
+        # image = cv2.imread('image1.jpg')
+        print("can video be captured?",ret)
+        # show_image(image)
+        if ret==True:
+            image_process(image)
+        else:
+            pass
+        k=cv2.waitKey(5)&0xFF
+        if k==27:
+            break
+    
+if __name__=="__main__":
+    main()
